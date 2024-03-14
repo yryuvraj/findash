@@ -3,6 +3,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np 
 import plotly.express as px
+import plotly.graph_objects as go
 
 st.title("FinDash")
 ticker = st.sidebar.text_input("Enter Ticker")
@@ -13,6 +14,16 @@ data = yf.download(ticker, start=start_date, end=end_date)
 
 fig = px.line(data, x=data.index, y=data['Adj Close'], title="Time Series with Rangeslider")
 st.plotly_chart(fig)
+
+x = go.Figure(data=[go.Candlestick(x=data.index,
+                                     open=data['Open'],
+                                     high=data['High'],
+                                     low=data['Low'],
+                                     close=data['Close'])])
+
+st.header("Candle Stick Chart")
+x.update_layout(title="Candlestick Chart")
+st.plotly_chart(x)
 
 pricing_data, fundatmental_data, news = st.tabs(["Pricing Data", "Fundamental Data", "News"])
 
@@ -30,10 +41,28 @@ with pricing_data:
     stddev = np.std(data2['%Change'])*np.sqrt(252)*100
     st.write("Volatility or Standard Deviation is:", stddev, "%")
     st.write("Risk Adjusted Return: Sharpe Ratio : ", annual_return/stddev, "%")
-    
-with fundatmental_data:
-    st.write("Fundamental Data")
 
+from alpha_vantage.fundamentaldata import FundamentalData  
+with fundatmental_data:
+    st.header("Fundamental Data")
+    key = 'LAIZ601ZA7O2FULW'
+    fd = FundamentalData(key, output_format='pandas')
+    st.subheader("Balance Sheet")
+    balance_sheet = fd.get_balance_sheet_annual(ticker)[0]
+    bs = balance_sheet.T[2:]
+    bs.columns = list(balance_sheet.T.iloc[0])
+    st.write(bs)
+    st.subheader("Income Statement")
+    income_statement = fd.get_income_statement_annual(ticker)[0]
+    is1 = income_statement.T[2:]
+    is1.columns = list(income_statement.T.iloc[0])
+    st.write(is1)
+    st.subheader("Cash Flow Statement")
+    cash_flow = fd.get_cash_flow_annual(ticker)[0]
+    cf = cash_flow.T[2:]
+    cf.columns = list(cash_flow.T.iloc[0])
+    st.write(cf)
+    
 from stocknews import StockNews
 with news:
     st.header(f'News of {ticker}')
