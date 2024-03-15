@@ -25,7 +25,7 @@ st.header("Candle Stick Chart")
 x.update_layout(title="Candlestick Chart")
 st.plotly_chart(x)
 
-pricing_data, fundatmental_data, news = st.tabs(["Pricing Data", "Fundamental Data", "News"])
+pricing_data, fundatmental_data, news, tech_indicator= st.tabs(["Pricing Data", "Fundamental Data", "News", "Technical Indicators"])
 
 with pricing_data:
     st.header("Price Movements")
@@ -77,5 +77,17 @@ with news:
         st.write(f'Title Sentiment: {title_sentiment}')
         news_sentiment = df_news['sentiment_summary'][i]
         st.write(f'News Sentiment: {news_sentiment}')
-        
+
+import pandas_ta as ta   
+with tech_indicator:
+    st.header("Technical Indicators")
+    df = pd.DataFrame()
+    ind_list = df.ta.indicators(as_list=True)
+    technical_indicator = st.selectbox("Select Indicator", options=ind_list)
+    method = technical_indicator
+    indicator = pd.DataFrame(getattr(ta, method)(low=data['Low'], close=data['Close'], high=data['High'], open=data['Open'], volume=data['Volume']))
+    indicator['Close'] = data['Close']
+    xyz = px.line(indicator)
+    st.plotly_chart(xyz)
+    st.write(indicator)
     
